@@ -6,6 +6,9 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
+library(tidyverse)
+library(rvest)
+library(httr)
 knitr::opts_chunk$set(echo = TRUE)
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
@@ -16,10 +19,6 @@ options(
 
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
-
-library(tidyverse)
-library(rvest)
-library(httr)
 ```
 
 ## R Markdown
@@ -45,5 +44,80 @@ table_marj =
   html_table() |> 
   slice(-1) |> 
   as_tibble()
+```
+
+
+## Read books
+
+I want the data from here
+
+
+```{r}
+url = "http://books.toscrape.com"
+
+books_html = read_html(url)
+```
+
+
+```{r}
+books_titles = 
+  books_html |>
+  html_elements("h3") |>
+  html_text2()
+
+books_stars = 
+  books_html |>
+  html_elements(".star-rating") |>
+  html_attr("class")
+
+books_price = 
+  books_html |>
+  html_elements(".price_color") |>
+  html_text()
+
+books = tibble(
+  title = books_titles,
+  stars = books_stars,
+  price = books_price
+)
+```
+
+
+#### API
+
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") |> 
+  content("parsed")  #解析 response 正文内容
+```
+
+
+将此数据集导入为 JSON 文件
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.json") |> 
+  content("text") |>
+  jsonlite::fromJSON() |>
+  as_tibble()
+```
+
+
+#### pokemon API
+R 调用网络 API 并解析 JSON 数据
+**`poke`** 提取
+```{r}
+poke = 
+  GET("http://pokeapi.co/api/v2/pokemon/1") |>
+  content()
+
+poke[["name"]]
+```
+
+```{r}
+poke[["height"]]
+```
+
+```{r}
+poke[["abilities"]]
 ```
 
